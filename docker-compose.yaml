@@ -1,0 +1,76 @@
+---
+name: nextcloud
+
+volumes:
+  postgres-data:
+  nextcloud-data:
+
+services:
+  db:
+    image: postgres:16.2
+    restart: unless-stopped
+    volumes:
+      - type: volume
+        source: postgres-data
+        target: /var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  redis:
+    image: redis:7.2.4
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3.9
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+  onlyoffice:
+    image: onlyoffice/documentserver:8.0.1
+    restart: unless-stopped
+    ports:
+      - name: http
+        target: 80
+        published: 8081
+        host_ip: 127.0.0.1
+        protocol: tcp
+    environment:
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PWD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      AMQP_URI: amqp://rabbit:${RABBITMQ_DEFAULT_PASS}@rabbitmq
+      REDIS_SERVER_HOST: redis
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+  nextcloud:
+    image: nextcloud:29.0.0-apache
+    restart: unless-stopped
+    volumes:
+      - type: volume
+        source: nextcloud-data
+        target: /var/www/html
+      - type: bind
+        source: ./nextcloud-hooks
+        target: /docker-entrypoint-hooks.d/before-starting
+        read_only: true
+        bind:
+          selinux: z #shared
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+      REDIS_HOST: redis
+      OO_JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - db
+      - redis
+  nginx:
+    image: nginx:1.26.0
+    restart: unless-stopped
+...
