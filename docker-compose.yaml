@@ -22,7 +22,9 @@ services:
     image: collabora/code:24.04.1.4.1
     restart: unless-stopped
     environment:
-      extra_params: --o:ssl.enable=false
+      extra_params: --o:ssl.enable=false --o:ssl.termination=true
+      username: admin
+      password: ${COLLABORA_PASS}
 
   nextcloud:
     image: nextcloud:29.0.0-fpm
