@@ -27,7 +27,7 @@ services:
       password: ${COLLABORA_PASS}
 
   nextcloud:
-    image: nextcloud:29.0.0-fpm
+    image: nextcloud:29.0.0-apache
     restart: unless-stopped
     volumes:
       - nextcloud-data:/var/www/html:z
@@ -39,6 +39,10 @@ services:
       NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
       NEXTCLOUD_TRUSTED_DOMAINS: ${HOSTNAME}
       REDIS_HOST: redis
+      OVERWRITEHOST: ${HOSTNAME}
+      OVERWRITEPROTOCOL: https
+      OVERWRITEWEBROOT: /
+      OVERWRITECLIURL: https://${HOSTNAME}/
     depends_on:
       - db
       - redis
