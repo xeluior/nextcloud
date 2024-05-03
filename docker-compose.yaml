@@ -27,7 +27,7 @@ services:
       password: ${COLLABORA_PASS}
 
   nextcloud:
-    image: nextcloud:29.0.0-apache
+    build: ./nextcloud
     restart: unless-stopped
     volumes:
       - nextcloud-data:/var/www/html:z
@@ -37,23 +37,35 @@ services:
     environment:
       NEXTCLOUD_ADMIN_USER: admin
       NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
-      NEXTCLOUD_TRUSTED_DOMAINS: ${HOSTNAME}
+      NEXTCLOUD_TRUSTED_DOMAINS: ${VHOST}
       REDIS_HOST: redis
-      OVERWRITEHOST: ${HOSTNAME}
+      OVERWRITEHOST: ${VHOST}
       OVERWRITEPROTOCOL: https
       OVERWRITEWEBROOT: /
-      OVERWRITECLIURL: https://${HOSTNAME}/
+      OVERWRITECLIURL: https://${VHOST}/
+      TRUSTED_PROXIES: nginx
+      INSECURE_COLLABORA_SERVER: yes
     depends_on:
       - db
       - redis
+
+  cron:
+    build: ./nextcloud
+    restart: unless-stopped
+    volumes:
+      - nextcloud-data:/var/www/html:z
+    entrypoint: /cron.sh
+    depends_on:
+      - nextcloud
 
   nginx:
     build: ./nginx
     restart: unless-stopped
     volumes:
-      - nextcloud-data:/var/www/html:z,ro
       - ./ssl:/etc/nginx/certs:z,ro
     ports:
       - 80:80/tcp
       - 443:443/tcp
+    environment:
+      NGINX_HOST: ${VHOST}
 ...
