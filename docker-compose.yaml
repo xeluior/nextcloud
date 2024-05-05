@@ -27,13 +27,18 @@ services:
       password: ${COLLABORA_PASS}
 
   nextcloud:
+    image: localhost.localdomain/local/nextcloud
     build: ./nextcloud
     restart: unless-stopped
     volumes:
       - nextcloud-data:/var/www/html:z
     env_file:
-      - db.env
-      - smtp.env
+      - path: ./db.env
+        required: true
+      - path: ./smtp.env
+        required: false
+      - path: ./apps.env
+        required: false
     environment:
       NEXTCLOUD_ADMIN_USER: admin
       NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
@@ -44,12 +49,12 @@ services:
       OVERWRITEWEBROOT: /
       OVERWRITECLIURL: https://${VHOST}/
       TRUSTED_PROXIES: nginx
-      INSECURE_COLLABORA_SERVER: yes
     depends_on:
       - db
       - redis
 
   cron:
+    image: localhost.localdomain/local/nextcloud
     build: ./nextcloud
     restart: unless-stopped
     volumes:

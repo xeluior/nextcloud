@@ -1,1 +1,0 @@
-../post-installation/99-enable-readonly.sh
